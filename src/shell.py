@@ -15,6 +15,10 @@ class Result:
 class Shell:
     """Run simple space-delimited shell commands."""
 
+    def __init__(self, settings):
+        """Store parsed launch settings."""
+        self.settings = settings
+
     @property
     def cwd(self):
         """Return the displayed current directory."""
@@ -30,6 +34,7 @@ class Shell:
             "ls": self._stub,
             "cd": self._stub,
             "exit": self._exit,
+            "conf-dump": self._conf_dump,
         }
         handler = commands.get(name)
         if handler is None:
@@ -42,7 +47,18 @@ class Shell:
             return Result(f"Ошибка: {name}: слишком много аргументов", False)
         return Result(f"{name}: args={args}")
 
-    def _exit(self, name, args):
+    def _conf_dump(self, _name, args):
+        """Display key-value launch settings."""
+        if args:
+            return Result("Ошибка: conf-dump: аргументы запрещены", False)
+        script = self.settings.script_path
+        lines = (
+            f"vfs_path={self.settings.vfs_path}",
+            f"script_path={script if script is not None else '(нет)'}",
+        )
+        return Result("\n".join(lines))
+
+    def _exit(self, _name, args):
         """End a REPL session when no arguments are passed."""
         if args:
             return Result("Ошибка: exit: аргументы не поддерживаются", False)

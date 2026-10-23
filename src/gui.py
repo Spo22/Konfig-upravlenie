@@ -5,6 +5,8 @@ import socket
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 
+from src.script import run_script
+
 
 class EmulatorGUI:
     """Display a command-line conversation inside a GUI window."""
@@ -27,6 +29,8 @@ class EmulatorGUI:
         self.entry.bind("<Return>", self._submit)
         self.entry.focus_set()
         self.write("Эмулятор UNIX-подобной оболочки, вариант 25")
+        self.write("Настройки запуска:")
+        self.write(self.shell.execute("conf-dump").text)
 
     def write(self, message):
         """Append a line of text to the read-only output area."""
@@ -51,6 +55,17 @@ class EmulatorGUI:
         self.entry.delete(0, "end")
         self.process(line)
 
+    def _startup(self):
+        """Execute and echo the optional startup script."""
+        script_path = self.shell.settings.script_path
+        if script_path is None:
+            return
+        try:
+            run_script(self.shell, script_path, self.write)
+        except (OSError, UnicodeError) as error:
+            self.write(f"Ошибка чтения стартового скрипта: {error}")
+
     def run(self):
         """Launch the Tkinter event loop."""
+        self.root.after(50, self._startup)
         self.root.mainloop()
