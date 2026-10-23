@@ -1,0 +1,2 @@
+mkdir unknown/folder
+whoami

@@ -39,6 +39,27 @@ class VirtualFileSystemTests(unittest.TestCase):
         self.vfs.change_directory("..")
         self.assertEqual(self.vfs.cwd, "/one")
 
+    def test_mkdir_changes_memory_not_disk(self):
+        """Create a VFS directory without touching the physical source."""
+        self.vfs.mkdir("/one/new")
+        self.assertIn("new", self.vfs.list_directory("one"))
+        self.assertFalse((self.root / "one/new").exists())
+
+    def test_mkdir_nested(self):
+        """Create a second directory inside one made in memory."""
+        self.vfs.mkdir("/one/new")
+        self.vfs.mkdir("/one/new/sub")
+        self.assertEqual(self.vfs.list_directory("/one/new"), ["sub"])
+
+    def test_mkdir_errors(self):
+        """Reject existing items and missing parents."""
+        with self.assertRaises(VirtualFileSystemError):
+            self.vfs.mkdir("/one")
+        with self.assertRaises(VirtualFileSystemError):
+            self.vfs.mkdir("/missing/child")
+        with self.assertRaises(VirtualFileSystemError):
+            self.vfs.mkdir("/")
+
     def test_missing_path(self):
         """Report a nonexistent virtual path."""
         with self.assertRaises(VirtualFileSystemError):

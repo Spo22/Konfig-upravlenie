@@ -1,0 +1,16 @@
+# Этап 5: демонстрация всех доступных команд
+conf-dump
+whoami
+cal 10 2026
+ls
+cd projects/python
+ls
+mkdir reports
+ls
+cd reports
+mkdir results
+ls
+cd ../..
+ls
+cd /
+ls

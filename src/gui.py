@@ -61,7 +61,10 @@ class EmulatorGUI:
         if script_path is None:
             return
         try:
-            run_script(self.shell, script_path, self.write)
+            run_script(
+                self.shell, script_path, self.write,
+                on_exit=lambda: self.root.after(200, self.root.destroy),
+            )
         except (OSError, UnicodeError) as error:
             self.write(f"Ошибка чтения стартового скрипта: {error}")
 

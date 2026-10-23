@@ -29,7 +29,8 @@ class VirtualFileSystem:
         try:
             self.root = self._snapshot(path)
         except OSError as error:
-            raise VirtualFileSystemError(f"Ошибка чтения VFS: {error}") from error
+            message = f"Ошибка чтения VFS: {error}"
+            raise VirtualFileSystemError(message) from error
         self._cwd = []
 
     @staticmethod
@@ -74,7 +75,8 @@ class VirtualFileSystem:
             if not node.is_directory:
                 raise VirtualFileSystemError("Это не каталог")
             if part not in node.children:
-                raise VirtualFileSystemError(f"Путь не найден: /{'/'.join(parts)}")
+                pathname = "/" + "/".join(parts)
+                raise VirtualFileSystemError(f"Путь не найден: {pathname}")
             node = node.children[part]
         return node
 
@@ -90,18 +92,18 @@ class VirtualFileSystem:
         """Change the in-memory working directory."""
         parts = self._parts(path)
         if not self._node(parts).is_directory:
-            raise VirtualFileSystemError("cd: это не каталог")
+            raise VirtualFileSystemError("это не каталог")
         self._cwd = parts
 
     def mkdir(self, path):
         """Create one directory only in the snapshot, never on disk."""
         name = path.rstrip("/").split("/")[-1]
         if not name or name in (".", ".."):
-            raise VirtualFileSystemError("mkdir: некорректное имя каталога")
+            raise VirtualFileSystemError("некорректное имя каталога")
         parts = self._parts(path)
         parent = self._node(parts[:-1])
         if not parent.is_directory:
-            raise VirtualFileSystemError("mkdir: родитель не каталог")
+            raise VirtualFileSystemError("родитель не каталог")
         if name in parent.children:
-            raise VirtualFileSystemError("mkdir: такой файл или каталог уже есть")
+            raise VirtualFileSystemError("такой файл или каталог уже есть")
         parent.children[name] = Node(is_directory=True)

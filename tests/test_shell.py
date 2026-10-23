@@ -52,6 +52,19 @@ class ReplTests(unittest.TestCase):
         self.assertIn("2026", self.shell.execute("cal 2026").text)
         self.assertFalse(self.shell.execute("cal 13 2026").ok)
 
+    def test_mkdir(self):
+        """Make a VFS directory and list it without changing disk."""
+        self.assertTrue(self.shell.execute("mkdir new").ok)
+        self.assertEqual(self.shell.execute("ls").text, "new")
+        self.assertFalse((Path(self.temp.name) / "new").exists())
+
+    def test_mkdir_bad_arguments(self):
+        """Reject empty, extra, and duplicate arguments."""
+        self.assertFalse(self.shell.execute("mkdir").ok)
+        self.assertFalse(self.shell.execute("mkdir one two").ok)
+        self.assertTrue(self.shell.execute("mkdir one").ok)
+        self.assertFalse(self.shell.execute("mkdir one").ok)
+
     def test_exit(self):
         """Exit is a recognized terminal command."""
         self.assertTrue(self.shell.execute("exit").exit_requested)

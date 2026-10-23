@@ -49,6 +49,7 @@ class Shell:
             "conf-dump": self._conf_dump,
             "cal": self._cal,
             "whoami": self._whoami,
+            "mkdir": self._mkdir,
         }
         handler = commands.get(name)
         if handler is None:
@@ -71,6 +72,13 @@ class Shell:
         if len(args) > 1:
             return Result("Ошибка: cd: слишком много аргументов", False)
         self.vfs.change_directory(args[0] if args else "/")
+        return Result()
+
+    def _mkdir(self, args):
+        """Create a single directory only in the in-memory VFS."""
+        if len(args) != 1:
+            return Result("Ошибка: mkdir: требуется один путь", False)
+        self.vfs.mkdir(args[0])
         return Result()
 
     def _cal(self, args):

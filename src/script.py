@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-def run_script(shell, script_path, write):
+def run_script(shell, script_path, write, on_exit=None):
     """Echo commands and output, stopping at the first error."""
     contents = Path(script_path).read_text(encoding="utf-8-sig")
     for number, raw_line in enumerate(contents.splitlines(), start=1):
@@ -18,5 +18,7 @@ def run_script(shell, script_path, write):
             write(f"Скрипт остановлен из-за ошибки на строке {number}.")
             return False
         if result.exit_requested:
+            if on_exit is not None:
+                on_exit()
             return True
     return True
