@@ -14,7 +14,12 @@ class ReplTests(unittest.TestCase):
 
     def setUp(self):
         """Create a fresh configured shell."""
-        self.shell = Shell(Settings(Path(".")))
+        self.temp = tempfile.TemporaryDirectory()
+        self.shell = Shell(Settings(Path(self.temp.name)))
+
+    def tearDown(self):
+        """Remove the temporary VFS source."""
+        self.temp.cleanup()
 
     def test_stub_command(self):
         """Show the parsed arguments of placeholder commands."""

@@ -1,0 +1,1 @@
+Commands operate on a snapshot in memory.

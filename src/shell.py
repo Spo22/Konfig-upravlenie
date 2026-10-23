@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from src.vfs import VirtualFileSystem
+
 
 @dataclass(frozen=True)
 class Result:
@@ -18,11 +20,12 @@ class Shell:
     def __init__(self, settings):
         """Store parsed launch settings."""
         self.settings = settings
+        self.vfs = VirtualFileSystem(settings.vfs_path)
 
     @property
     def cwd(self):
         """Return the displayed current directory."""
-        return "/"
+        return self.vfs.cwd
 
     def execute(self, line):
         """Parse and execute a line, reporting command errors."""

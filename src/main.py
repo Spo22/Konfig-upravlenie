@@ -1,9 +1,12 @@
 """Application entry point."""
 
+import sys
+
 from src.gui import EmulatorGUI
 from src.script import run_script
 from src.settings import parse_cli
 from src.shell import Shell
+from src.vfs import VirtualFileSystemError
 
 
 def run_headless(shell):
@@ -28,7 +31,11 @@ def run_headless(shell):
 def main(argv=None):
     """Choose GUI by default and terminal mode for automated checking."""
     settings = parse_cli(argv)
-    shell = Shell(settings)
+    try:
+        shell = Shell(settings)
+    except VirtualFileSystemError as error:
+        print(f"Ошибка VFS: {error}", file=sys.stderr)
+        return 2
     if settings.headless:
         try:
             return run_headless(shell)
