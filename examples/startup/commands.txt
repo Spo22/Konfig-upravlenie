@@ -1,0 +1,15 @@
+# Этап 4: проверка основных команд
+conf-dump
+whoami
+cal
+cal 2026
+cal 2 2024
+ls
+cd projects
+ls
+cd python/src
+ls
+cd ../tests
+ls
+cd /
+ls projects/python/src/app.py

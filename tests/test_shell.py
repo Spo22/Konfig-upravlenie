@@ -21,9 +21,11 @@ class ReplTests(unittest.TestCase):
         """Remove the temporary VFS source."""
         self.temp.cleanup()
 
-    def test_stub_command(self):
-        """Show the parsed arguments of placeholder commands."""
-        self.assertEqual(self.shell.execute("ls x").text, "ls: args=['x']")
+    def test_ls(self):
+        """List files in the in-memory VFS."""
+        (Path(self.temp.name) / "readme.txt").write_text("before")
+        self.assertEqual(self.shell.execute("ls").text, "")
+        self.assertFalse(self.shell.execute("ls missing.txt").ok)
 
     def test_unknown_command(self):
         """Reject names not supported by the emulator."""
@@ -32,6 +34,23 @@ class ReplTests(unittest.TestCase):
     def test_bad_arguments(self):
         """Report unsupported arguments."""
         self.assertFalse(self.shell.execute("cd x y").ok)
+
+    def test_cd_root(self):
+        """Keep current directory within the virtual root."""
+        result = self.shell.execute("cd /")
+        self.assertTrue(result.ok)
+        self.assertEqual(self.shell.cwd, "/")
+
+    def test_whoami(self):
+        """Display the current real user's login name."""
+        self.assertTrue(self.shell.execute("whoami").text)
+        self.assertFalse(self.shell.execute("whoami extra").ok)
+
+    def test_calendar(self):
+        """Print supported calendars and reject invalid months."""
+        self.assertIn("2024", self.shell.execute("cal 2 2024").text)
+        self.assertIn("2026", self.shell.execute("cal 2026").text)
+        self.assertFalse(self.shell.execute("cal 13 2026").ok)
 
     def test_exit(self):
         """Exit is a recognized terminal command."""

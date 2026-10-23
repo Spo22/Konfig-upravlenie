@@ -1,8 +1,17 @@
 """Command parsing and execution for the shell emulator."""
 
+import calendar
+import getpass
 from dataclasses import dataclass
+from datetime import date
 
-from src.vfs import VirtualFileSystem
+from src.vfs import VirtualFileSystem, VirtualFileSystemError
+
+
+MIN_YEAR = 1
+MAX_YEAR = 9999
+MIN_MONTH = 1
+MAX_MONTH = 12
 
 
 @dataclass(frozen=True)
@@ -15,43 +24,95 @@ class Result:
 
 
 class Shell:
-    """Run simple space-delimited shell commands."""
+    """Interpret commands using only the virtual filesystem."""
 
     def __init__(self, settings):
-        """Store parsed launch settings."""
+        """Store settings and read the VFS into process memory."""
         self.settings = settings
         self.vfs = VirtualFileSystem(settings.vfs_path)
 
     @property
     def cwd(self):
-        """Return the displayed current directory."""
+        """Return the UNIX-style current virtual directory."""
         return self.vfs.cwd
 
     def execute(self, line):
-        """Parse and execute a line, reporting command errors."""
+        """Parse a space-delimited line and execute one command."""
         parts = line.strip().split()
         if not parts:
             return Result()
         name, *args = parts
         commands = {
-            "ls": self._stub,
-            "cd": self._stub,
+            "ls": self._ls,
+            "cd": self._cd,
             "exit": self._exit,
             "conf-dump": self._conf_dump,
+            "cal": self._cal,
+            "whoami": self._whoami,
         }
         handler = commands.get(name)
         if handler is None:
             return Result(f"Ошибка: неизвестная команда: {name}", False)
-        return handler(name, args)
+        try:
+            return handler(args)
+        except VirtualFileSystemError as error:
+            return Result(f"Ошибка: {name}: {error}", False)
 
-    def _stub(self, name, args):
-        """Print command name and arguments in the REPL stage."""
+    def _ls(self, args):
+        """List a virtual directory or display a filename."""
         if len(args) > 1:
-            return Result(f"Ошибка: {name}: слишком много аргументов", False)
-        return Result(f"{name}: args={args}")
+            return Result("Ошибка: ls: слишком много аргументов", False)
+        path = args[0] if args else "."
+        names = self.vfs.list_directory(path)
+        return Result("\n".join(names))
 
-    def _conf_dump(self, _name, args):
-        """Display key-value launch settings."""
+    def _cd(self, args):
+        """Move to the chosen virtual directory, or to root."""
+        if len(args) > 1:
+            return Result("Ошибка: cd: слишком много аргументов", False)
+        self.vfs.change_directory(args[0] if args else "/")
+        return Result()
+
+    def _cal(self, args):
+        """Display the current month, a year, or a selected month."""
+        try:
+            month, year = self._calendar_args(args)
+            if month is None:
+                return Result(calendar.calendar(year))
+            return Result(calendar.month(year, month))
+        except (ValueError, OverflowError):
+            return Result("Ошибка: cal: ожидается cal [год] "
+                          "или cal [месяц] [год]", False)
+
+    @staticmethod
+    def _calendar_args(args):
+        """Validate arguments and convert them into a year/month pair."""
+        today = date.today()
+        if not args:
+            return today.month, today.year
+        if len(args) == 1:
+            year = int(args[0])
+            if not MIN_YEAR <= year <= MAX_YEAR:
+                raise ValueError("Недопустимый год")
+            return None, year
+        if len(args) == 2:
+            month, year = int(args[0]), int(args[1])
+            if not MIN_MONTH <= month <= MAX_MONTH:
+                raise ValueError("Недопустимый месяц")
+            if not MIN_YEAR <= year <= MAX_YEAR:
+                raise ValueError("Недопустимый год")
+            return month, year
+        raise ValueError("Слишком много аргументов")
+
+    @staticmethod
+    def _whoami(args):
+        """Display the real OS username, not a virtual identity."""
+        if args:
+            return Result("Ошибка: whoami: аргументы запрещены", False)
+        return Result(getpass.getuser())
+
+    def _conf_dump(self, args):
+        """Display launch settings as key-value pairs."""
         if args:
             return Result("Ошибка: conf-dump: аргументы запрещены", False)
         script = self.settings.script_path
@@ -61,8 +122,9 @@ class Shell:
         )
         return Result("\n".join(lines))
 
-    def _exit(self, _name, args):
-        """End a REPL session when no arguments are passed."""
+    @staticmethod
+    def _exit(args):
+        """Request termination of an interactive session."""
         if args:
             return Result("Ошибка: exit: аргументы не поддерживаются", False)
         return Result("Завершение работы.", exit_requested=True)
