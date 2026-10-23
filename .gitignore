@@ -1,0 +1,27 @@
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.env
+
+# IDE and OS metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build artifacts and archives
+dist/
+build/
+*.egg-info/
+*.zip
+*.tar
+*.gz
+*.exe
+*.pyc
